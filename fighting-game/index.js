@@ -11,45 +11,35 @@ context.fillRect(0, 0, canvas.width, canvas.height);
 // Gravity
 const gravity = 0.7;
 
-class Sprite{
-    constructor({position, velocity}){
-        this.position = position;
-        this.velocity = velocity;
-        this.width = 50;
-        this.height = 150;
-        this.lastKey;
-    }
-
-    draw(){
-        context.fillStyle = 'red';
-        context.fillRect(this.position.x, this.position.y, this.width, this.height);
-    }
-
-    update(){
-        this.draw();
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
-
-        if(this.position.y + this.height + this.velocity.y >= canvas.height){
-            this.velocity.y = 0;  
-        }else{
-            this.velocity.y += gravity;
-        }
-    }
-}
-
-const player = new Sprite(
+const background = new Sprite(
     {
-        position:{x: 0, y: 0},
-        velocity:{x: 0, y: 10}
+        position: {x: 0, y: 0},
+        imageSrc: "./img/background.png"
     }
 );
 
-const enemy = new Sprite(
+
+const player = new Fighter(
+    {
+        position:{x: 0, y: 0},
+        velocity:{x: 0, y: 10},
+        offset: {
+            x: 0,
+            y: 0,
+        }
+    }
+);
+
+const enemy = new Fighter(
     {
         position: {x: 400, y: 100},
-        velocity: {x: 0, y: 0}
-    }
+        velocity: {x: 0, y: 0},
+        color:'blue',
+        offset: {
+            x: -50,
+            y: 0,
+        }
+    },
 );
 
 const keys = {
@@ -73,11 +63,28 @@ const keys = {
     }
 }
 
+let time = 60;
+let timerId;
+function decreaseTime(){
+    if(time > 0){
+        timerId = setTimeout(decreaseTime, 1000);
+        time--;
+        document.querySelector("#timer").innerHTML = time;
+    }
+
+    if(time === 0){
+        determineWinner({player, enemy, timerId});   
+    }
+}
+
+decreaseTime();
+
 
 function animate(){
     window.requestAnimationFrame(animate);
     context.fillStyle = 'black';
     context.fillRect(0, 0, canvas.width, canvas.height);
+    background.update();
     player.update();
     enemy.update();
 
@@ -96,6 +103,24 @@ function animate(){
         enemy.velocity.x = -5;
     }else if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight'){
         enemy.velocity.x = 5;
+    }
+
+    // detect collision
+    if(rectangularCollision({rectangle1: player, rectangle2: enemy}) && (player.isAttacking)){
+        player.isAttacking = false;
+        enemy.health -= 20;
+        document.querySelector('#enemyHealth').style.width = enemy.health + '%';
+    }
+
+    if(rectangularCollision({rectangle1: enemy, rectangle2: player}) && (enemy.isAttacking)){
+        enemy.isAttacking = false;
+        player.health -= 20;
+        document.querySelector('#playerHealth').style.width = player.health + '%';
+    }
+
+    // end game based on health
+    if(player.health <= 0 || enemy.health <= 0){
+        determineWinner({player, enemy, timerId});
     }
 }
 
@@ -118,6 +143,9 @@ window.addEventListener('keydown', (event) => {
             keys.w.pressed = true;
             player.velocity.y = -20;
             break;
+        case ' ':
+            player.attack();
+            break; 
         
         // Enemy keys
         case 'ArrowRight':
@@ -132,6 +160,10 @@ window.addEventListener('keydown', (event) => {
         case 'ArrowUp':
             keys.ArrowUp.pressed = true;
             enemy.velocity.y = -20;
+            break;
+        
+        case 'ArrowDown':
+            enemy.isAttacking = true;
             break;
         
     }
