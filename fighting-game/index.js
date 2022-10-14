@@ -14,7 +14,16 @@ const gravity = 0.7;
 const background = new Sprite(
     {
         position: {x: 0, y: 0},
-        imageSrc: "./img/background.png"
+        imageSrc: "./img/background.png",
+    }
+);
+
+const shop = new Sprite(
+    {
+        position: {x: 600, y: 128},
+        imageSrc: "./img/shop.png",
+        scale: 2.75,
+        frameMax: 6
     }
 );
 
@@ -26,6 +35,35 @@ const player = new Fighter(
         offset: {
             x: 0,
             y: 0,
+        },
+        imageSrc: './img/samuraiMack/Idle.png',
+        framesMax: 8,
+        scale: 2.5,
+        offset: {
+            x: 215,
+            y: 157,
+        },
+        sprites: {
+            idle: {
+                imageSrc: './img/samuraiMack/Idle.png',
+                framesMax: 8,
+            },
+            run: {
+                imageSrc: './img/samuraiMack/Run.png',
+                framesMax: 8,
+            },
+            jump: {
+                imageSrc: './img/samuraiMack/Jump.png',
+                framesMax: 2,
+            },
+            fall: {
+                imageSrc: './img/samuraiMack/Fall.png',
+                framesMax: 2,
+            },
+            attack1: {
+                imageSrc: './img/samuraiMack/Attack1.png',
+                framesMax: 6,
+            }
         }
     }
 );
@@ -38,7 +76,9 @@ const enemy = new Fighter(
         offset: {
             x: -50,
             y: 0,
-        }
+        },
+        imageSrc: './img/samuraiMack/Idle.png',
+        framesMax: 8
     },
 );
 
@@ -85,16 +125,28 @@ function animate(){
     context.fillStyle = 'black';
     context.fillRect(0, 0, canvas.width, canvas.height);
     background.update();
+    shop.update()
     player.update();
-    enemy.update();
+    // enemy.update();
 
     player.velocity.x = 0;
 
     // Player Movement
     if(keys.a.pressed && player.lastKey === 'a'){
         player.velocity.x = -5;
+        player.switchSprite('run');
     }else if(keys.d.pressed && player.lastKey === 'd'){
         player.velocity.x = 5;
+        player.switchSprite('run');
+    }else{
+        player.switchSprite('idel');
+    }
+
+    // Player Jumping
+    if(player.velocity.y < 0){
+        player.switchSprite('jump');
+    }else if(player.velocity.y > 0){
+        player.switchSprite('fall');
     }
 
     enemy.velocity.x = 0;
